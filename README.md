@@ -1,4 +1,4 @@
-# ⚡ Real-Time Auction System
+Markdown# ⚡ Real-Time Auction System
 
 A robust, production-ready real-time auction backend built with **NestJS**, **WebSockets (Socket.io)**, and **Prisma**. This system handles live bidding concurrency, group isolation using WebSockets Rooms, and automated auction closing via background Cron Jobs.
 
@@ -52,4 +52,12 @@ For each expired auction:
    2. Fetch highest bid (Winner)
    3. Emit 'auction_finished' to the WebSocket Room
    4. [Future Hook] Trigger Stripe Payment Charge
+🚦 WebSocket Events APIEvent NameTypePayloadDescriptionjoin_auctionListen{ "auctionId": "uuid" }Joins the specific auction room.user_joinedEmit{ "userId": "uuid", "message": "..." }Broadcasted to the room when a new user enters.place_bidListen{ "auctionId": "uuid", "amount": 350 }Submits a new bid (Requires Auth Guard).bid_updatedEmitAuction ObjectBroadcasted to the room when a new highest bid is accepted.bid_failedEmitString (Error Message)Sent only to the sender if the bid violates business rules.auction_finishedEmit{ "auctionId": "uuid", "winnerId": "uuid", "finalPrice": 350 }Broadcasted when the Cron Job closes the auction.⚙️ Getting StartedPrerequisitesNode.js (v18 or higher)PostgreSQL instance runningInstallationClone the repository:Bashgit clone [https://github.com/your-username/realtime-auction-backend.git](https://github.com/your-username/realtime-auction-backend.git)
+cd realtime-auction-backend
+Install dependencies:Bashnpm install
+Setup your environment variables (.env):Code snippetDATABASE_URL="postgresql://user:password@localhost:5432/auction_db?schema=public"
+JWT_SECRET="your_ultra_secure_jwt_secret"
+Run database migrations:Bashnpx prisma migrate dev
+Start the application in development mode:Bashnpm run start:dev
+The server will start on http://localhost:3000. You can connect your WebSocket client (like Insomnia or Postman) to ws://localhost:3000.
 ```
