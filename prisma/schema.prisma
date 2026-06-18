@@ -1,0 +1,83 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum AuctionStatus {
+  ACTIVE
+  FINISHED
+  CANCELED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  auctionsCreated Auction[] @relation("AuctionCreator")
+  bids            Bid[]
+  auctionsWon     Auction[] @relation("AuctionWinner")
+
+  @@map("users")
+}
+
+model Auction {
+  id           String        @id @default(uuid())
+  title        String
+  description  String?
+  initialPrice Float         @map("initial_price")
+  currentPrice Float         @map("current_price")
+  status       AuctionStatus @default(ACTIVE)
+  endsAt       DateTime      @map("ends_at")
+  creatorId    String        @map("creator_id")
+  winnerId     String?       @map("winner_id")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  // Relations
+  creator User   @relation("AuctionCreator", fields: [creatorId], references: [id])
+  winner  User?  @relation("AuctionWinner", fields: [winnerId], references: [id])
+  bids    Bid[]
+  payment Payment?
+
+  @@map("auctions")
+}
+
+model Bid {
+  id        String   @id @default(uuid())
+  amount    Float
+  auctionId String   @map("auction_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@map("bids")
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  auctionId     String        @unique @map("auction_id")
+  stripeSession String?       @map("stripe_session")
+  status        PaymentStatus @default(PENDING)
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  // Relations
+  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
