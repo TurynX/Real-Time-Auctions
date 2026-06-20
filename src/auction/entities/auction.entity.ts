@@ -9,6 +9,7 @@ export class Auction {
     public readonly creatorId: string,
     public readonly endsAt: Date,
     public readonly createdAt: Date,
+    public readonly lastBidUserId?: string | null,
     public readonly winnerId?: string | null,
   ) {}
 }

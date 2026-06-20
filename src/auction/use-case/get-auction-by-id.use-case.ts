@@ -14,6 +14,9 @@ export class GetAuctionByIdUseCase {
 
   async execute(id: string): Promise<Auction> {
     const auction = await this.auctionRepo.findByAuctionId(id);
+
+    console.log(auction);
+
     if (!auction) {
       throw new NotFoundException(`Auction with ID "${id}" not found`);
     }

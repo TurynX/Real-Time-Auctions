@@ -7,12 +7,11 @@ import { AuthRepository } from './repositories/auth.repo';
 import { PrismaService } from 'src/lib/prisma.service';
 import { AUTH_REPOSITORY } from './repositories/auth.repo.interface';
 import { AuthGuard } from './guards/auth.guard';
-import { JWT_SECRET_KEY } from './constant';
 
 @Module({
   imports: [
     JwtModule.register({
-      secret: JWT_SECRET_KEY,
+      secret: process.env.JWT_SECRET_KEY!,
       signOptions: { expiresIn: '7d' },
     }),
   ],

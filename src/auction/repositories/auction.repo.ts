@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { IAuctionRepository } from './auction.repo.interface';
 import { CreateAuctionDto } from '../dto/create-auction.dto';
 import { Auction, Bid } from '../entities/auction.entity';
@@ -39,6 +43,14 @@ export class AuctionRepository implements IAuctionRepository {
       where: {
         status: 'ACTIVE',
       },
+      include: {
+        bids: {
+          orderBy: {
+            amount: 'desc',
+          },
+          take: 1,
+        },
+      },
     });
     return auctions.map((auction) => {
       return new Auction(
@@ -51,31 +63,67 @@ export class AuctionRepository implements IAuctionRepository {
         auction.creatorId,
         auction.endsAt,
         auction.createdAt,
+        auction.bids[0]?.userId,
       );
     });
   }
 
-  async updateAuction(auctionId: string, amount: number): Promise<Auction> {
-    const auction = await this.prisma.auction.update({
+  async updateAuction(data: PlaceBidDto, userId: string): Promise<Auction> {
+    try {
+      const auction = await this.prisma.auction.update({
+        where: {
+          id: data.auctionId,
+        },
+        data: {
+          currentPrice: data.amount,
+        },
+      });
+
+      if (!auction) {
+        throw new Error('RACE_CONDITION_DETECTED');
+      }
+      return new Auction(
+        auction.id,
+        auction.title,
+        auction.description!,
+        auction.initialPrice,
+        auction.currentPrice,
+        auction.status,
+        auction.creatorId,
+        auction.endsAt,
+        auction.createdAt,
+        userId,
+      );
+    } catch (error) {
+      if (error.message === 'RACE_CONDITION_DETECTED') {
+        throw new ConflictException(
+          'The auction price changed before your bid could be processed. Try again.',
+        );
+      }
+
+      throw new InternalServerErrorException('Failed to process bid.');
+    }
+  }
+
+  async getAuctionBidsHistory(auctionId: string): Promise<Bid[]> {
+    const bids = await this.prisma.bid.findMany({
       where: {
-        id: auctionId,
+        auctionId,
       },
-      data: {
-        currentPrice: amount,
+      orderBy: {
+        createdAt: 'desc',
       },
+      take: 10,
     });
-    return new Auction(
-      auction.id,
-      auction.title,
-      auction.description!,
-      auction.initialPrice,
-      auction.currentPrice,
-      auction.status,
-      auction.creatorId,
-      auction.endsAt,
-      auction.createdAt,
-      auction.winnerId,
-    );
+    return bids.map((bid) => {
+      return new Bid(
+        bid.id,
+        bid.amount,
+        bid.userId,
+        bid.auctionId,
+        bid.createdAt,
+      );
+    });
   }
 
   async findByAuctionId(auctionId: string): Promise<Auction | null> {
@@ -83,10 +131,19 @@ export class AuctionRepository implements IAuctionRepository {
       where: {
         id: auctionId,
       },
+      include: {
+        bids: {
+          orderBy: {
+            amount: 'desc',
+          },
+          take: 1,
+        },
+      },
     });
     if (!auction) {
       return null;
     }
+
     return new Auction(
       auction.id,
       auction.title,
@@ -97,25 +154,18 @@ export class AuctionRepository implements IAuctionRepository {
       auction.creatorId,
       auction.endsAt,
       auction.createdAt,
+      auction.bids[0]?.userId,
       auction.winnerId,
     );
   }
-
-  async placeBid(data: PlaceBidDto, userId: string): Promise<Bid> {
-    const bid = await this.prisma.bid.create({
-      data: {
-        amount: data.amount,
-        auctionId: data.auctionId,
-        userId: userId,
-      },
+  async updateAuctionStatus(
+    auctionId: string,
+    status: AuctionStatus,
+  ): Promise<void> {
+    await this.prisma.auction.update({
+      where: { id: auctionId },
+      data: { status },
     });
-    return new Bid(
-      bid.id,
-      bid.amount,
-      bid.userId,
-      bid.auctionId,
-      bid.createdAt,
-    );
   }
 
   async findExpiredAuctions(now: Date): Promise<Auction[]> {
@@ -141,6 +191,23 @@ export class AuctionRepository implements IAuctionRepository {
     });
   }
 
+  async placeBid(data: PlaceBidDto, userId: string): Promise<Bid> {
+    const bid = await this.prisma.bid.create({
+      data: {
+        amount: data.amount,
+        userId,
+        auctionId: data.auctionId,
+      },
+    });
+    return new Bid(
+      bid.id,
+      bid.amount,
+      bid.userId,
+      bid.auctionId,
+      bid.createdAt,
+    );
+  }
+
   async getHighestBid(auctionId: string): Promise<Bid | null> {
     const bid = await this.prisma.bid.findFirst({
       where: {
@@ -160,16 +227,6 @@ export class AuctionRepository implements IAuctionRepository {
       bid.auctionId,
       bid.createdAt,
     );
-  }
-
-  async updateAuctionStatus(
-    auctionId: string,
-    status: AuctionStatus,
-  ): Promise<void> {
-    await this.prisma.auction.update({
-      where: { id: auctionId },
-      data: { status },
-    });
   }
 
   async findByUserId(userId: string): Promise<Auction[]> {
