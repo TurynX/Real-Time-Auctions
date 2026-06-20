@@ -8,7 +8,6 @@ import { App } from 'supertest/types';
 describe('Authentication (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
-  console.log(process.env.DATABASE_URL);
 
   const generateUniqueUser = () => ({
     name: 'John Doe',
@@ -24,9 +23,14 @@ describe('Authentication (e2e)', () => {
     app = moduleFixture.createNestApplication();
     prisma = moduleFixture.get<PrismaService>(PrismaService);
     await app.init();
+    await prisma.bid.deleteMany();
+    await prisma.auction.deleteMany();
+    await prisma.user.deleteMany();
   });
 
   beforeEach(async () => {
+    await prisma.bid.deleteMany();
+    await prisma.auction.deleteMany();
     await prisma.user.deleteMany();
   });
 
@@ -37,9 +41,9 @@ describe('Authentication (e2e)', () => {
       .send(user)
       .expect(201)
       .expect((res) => {
-        expect(res.body).toHaveProperty('id');
-        expect(res.body).toHaveProperty('name', user.name);
-        expect(res.body).toHaveProperty('email', user.email);
+        expect(res.body.data).toHaveProperty('id');
+        expect(res.body.data).toHaveProperty('name', user.name);
+        expect(res.body.data).toHaveProperty('email', user.email);
       });
   });
 
@@ -65,7 +69,7 @@ describe('Authentication (e2e)', () => {
       .send({ email: user.email, password: user.password })
       .expect(201)
       .expect((res) => {
-        expect(res.body).toHaveProperty('accessToken');
+        expect(res.body.data).toHaveProperty('accessToken');
       });
   });
 

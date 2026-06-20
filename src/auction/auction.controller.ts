@@ -21,24 +21,28 @@ export class AuctionController {
   constructor(private readonly auctionService: AuctionService) {}
 
   @Post('/create')
-  create(@Body() createAuctionDto: CreateAuctionDto, @Req() req) {
+  async create(@Body() createAuctionDto: CreateAuctionDto, @Req() req) {
     const userId = req.user.sub;
-    return this.auctionService.create(createAuctionDto, userId);
+    const auction = await this.auctionService.create(createAuctionDto, userId);
+    return { data: auction };
   }
 
   @Get()
-  findAll() {
-    return this.auctionService.findAll();
+  async findAll() {
+    const auction = await this.auctionService.findAll();
+    return { data: auction };
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.auctionService.findOne(id);
+  async findOne(@Param('id') id: string) {
+    const auction = await this.auctionService.findOne(id);
+    return { data: auction };
   }
 
   @Post('bid')
-  placeBid(@Body() placeBidDto: PlaceBidDto, @Req() req) {
+  async placeBid(@Body() placeBidDto: PlaceBidDto, @Req() req) {
     const userId = req.user.sub;
-    return this.auctionService.placeBid(placeBidDto, userId);
+    const bid = await this.auctionService.placeBid(placeBidDto, userId);
+    return { data: bid };
   }
 }

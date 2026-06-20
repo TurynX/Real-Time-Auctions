@@ -3,6 +3,7 @@ import {
   IsDate,
   IsNotEmpty,
   IsNumber,
+  IsPositive,
   IsString,
   Min,
   MinLength,
@@ -21,9 +22,9 @@ export class CreateAuctionDto {
 
   @Type(() => Number)
   @IsNumber()
-  @Min(1)
   @IsNotEmpty()
-  inicialPrice: number;
+  @Min(1, { message: 'Initial price must be at least 1' })
+  initialPrice: number;
 
   @Type(() => Date)
   @IsDate()

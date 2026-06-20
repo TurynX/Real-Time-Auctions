@@ -3,7 +3,7 @@ export class Auction {
     public readonly id: string,
     public readonly title: string,
     public readonly description: string,
-    public readonly inicialPrice: number,
+    public readonly initialPrice: number,
     public readonly currentPrice: number,
     public readonly status: 'ACTIVE' | 'FINISHED' | 'CANCELED',
     public readonly creatorId: string,

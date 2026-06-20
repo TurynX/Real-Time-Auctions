@@ -18,8 +18,8 @@ export class AuctionRepository implements IAuctionRepository {
       data: {
         title: data.title,
         description: data.description,
-        initialPrice: data.inicialPrice,
-        currentPrice: data.inicialPrice,
+        initialPrice: data.initialPrice,
+        currentPrice: data.initialPrice,
         endsAt: data.endsAt,
         status: 'ACTIVE',
         creatorId: userId,
