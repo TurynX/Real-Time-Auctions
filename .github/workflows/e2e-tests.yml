@@ -42,6 +42,7 @@ jobs:
         run: npx prisma migrate deploy
         env:
           DATABASE_URL: postgresql://postgres:root@localhost:5438/real-time-auction_test?schema=public
+          JWT_SECRET: secret
 
       - name: Execute E2E Tests
         run: npm run test:e2e
