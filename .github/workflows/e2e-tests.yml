@@ -48,3 +48,4 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:root@localhost:5438/real-time-auction_test?schema=public
           NODE_ENV: test
+          JWT_SECRET: secret
