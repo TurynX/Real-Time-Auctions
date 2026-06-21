@@ -1,0 +1,52 @@
+name: End-to-End Tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test-e2e:
+    runs-on: ubuntu-latest
+
+    services:
+      # Sobe o banco de dados de teste idêntico ao seu ambiente local
+      postgres_test:
+        image: postgres:alpine
+        env:
+          POSTGRES_USER: postgres # Ajuste com o usuário do seu .env.test
+          POSTGRES_PASSWORD: root # Ajuste com a senha do seu .env.test
+          POSTGRES_DB: real-time-auction_test # Ajuste com o nome do seu banco de teste
+        ports:
+          - 5438:5432
+        # Garante que o runner só vai começar quando o Postgres estiver pronto
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20 # Ou a versão do Node que você está usando
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Prisma Migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://postgres:root@localhost:5438/real-time-auction_test?schema=public
+
+      - name: Execute E2E Tests
+        run: npm run test:e2e
+        env:
+          DATABASE_URL: postgresql://postgres:root@localhost:5438/real-time-auction_test?schema=public
+          NODE_ENV: test
