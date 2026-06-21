@@ -42,7 +42,7 @@ lerna-debug.log*
 .env.test.local
 .env.production.local
 .env.local
-src/auth/constant.ts
+
 
 # temp directory
 .temp
