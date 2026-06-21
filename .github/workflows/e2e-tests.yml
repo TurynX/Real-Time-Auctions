@@ -11,16 +11,14 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      # Sobe o banco de dados de teste idêntico ao seu ambiente local
       postgres_test:
         image: postgres:alpine
         env:
-          POSTGRES_USER: postgres # Ajuste com o usuário do seu .env.test
-          POSTGRES_PASSWORD: root # Ajuste com a senha do seu .env.test
-          POSTGRES_DB: real-time-auction_test # Ajuste com o nome do seu banco de teste
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: root
+          POSTGRES_DB: real-time-auction_test
         ports:
           - 5438:5432
-        # Garante que o runner só vai começar quando o Postgres estiver pronto
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -34,7 +32,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 20 # Ou a versão do Node que você está usando
+          node-version: 20
           cache: 'npm'
 
       - name: Install dependencies
